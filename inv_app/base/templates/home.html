@@ -1,0 +1,53 @@
+{% extends "base_home.html" %}
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <h2>Добавить актив</h2>
+        <form method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary">Добавить</button>
+        </form>
+    </div>
+    <div class="col-md-8">
+        <h2>Мое порфтолио</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Тип</th>
+                    <th>Тикер</th>
+                    <th>Название</th>
+                    <th>Текущая цена</th>
+                    <th>Цена покупки</th>
+                    <th>Количество</th>
+                    <th>Изменение 24ч (%)</th>
+                    <th>Объем за сутки</th>
+                    <th>Капитализация / Размер выпуска</th>
+                    <th>Действие</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in portfolio_data %}
+                <tr>
+                    <td>{{ item.type }}</td>
+                    <td>{{ item.ticker }}</td>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.current_price|floatformat:2 }}</td>
+                    <td>{{ item.buy_price|floatformat:2 }}</td>
+                    <td>{{ item.amount|floatformat:2 }}</td>
+                    <td>{{ item.change|floatformat:2 }}</td>
+                    <td>{{ item.volume_24h|floatformat:2 }}</td>
+                    <td>{{ item.market_cap_or_issue_size|floatformat:2 }}</td>
+                    <td>
+                        <form method="POST" action="{% url 'base:delete_portfolio_item' item.pk %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm">Удалить</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

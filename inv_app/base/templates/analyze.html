@@ -1,0 +1,282 @@
+{% extends "base_home.html" %}
+{% block content %}
+<div>
+    <h2>Portfolio Analysis</h2>
+    <div class="mb-4">
+        <h4>Общая стоимость порфеля: {{ total_value|floatformat:2 }} RUB</h4>
+    </div>
+
+    <div class="mb-4">
+        <h4>Распределение активов</h4>
+        <canvas id="assetAllocationChart"></canvas>
+    </div>
+
+    <div class="mb-4">
+        <h4>Распределение акций</h4>
+        <canvas id="stockAllocationChart"></canvas>
+    </div>
+
+    <div class="mb-4">
+        <h4>Распределение криптовалют</h4>
+        <canvas id="cryptoAllocationChart"></canvas>
+    </div>
+
+    <div class="mb-4">
+        <h4>Распределение облигаций</h4>
+        <canvas id="bondAllocationChart"></canvas>
+    </div>
+
+    <div class="mb-4">
+        <h4>Распределение фондов</h4>
+        <canvas id="fundAllocationChart"></canvas>
+    </div>
+
+    <div class="mb-4">
+        <h4>Индивидуальные показатели активов</h4>
+        <canvas id="individualAssetPerformanceChart"></canvas>
+    </div>
+
+    <div class="mb-4">
+        <h4>Прибыль и убытки</h4>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Тип</th>
+                    <th>Тикер</th>
+                    <th>Название</th>
+                    <th>Количество</th>
+                    <th>Цена покупки</th>
+                    <th>Текущая цена</th>
+                    <th>Cуммарная стоимость </th>
+                    <th>Прибыль / убыток</th>
+                    <th>Изменение (%)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in portfolio_data %}
+                <tr>
+                    <td>{{ item.type }}</td>
+                    <td>{{ item.ticker }}</td>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.amount|floatformat:2 }}</td>
+                    <td>{{ item.buy_price|floatformat:2 }}</td>
+                    <td>{{ item.current_price|floatformat:2 }}</td>
+                    <td>{{ item.value|floatformat:2 }}</td>
+                    <td class="{% if item.profit_loss > 0 %}text-success{% else %}text-danger{% endif %}">{{ item.profit_loss|floatformat:2 }}</td>
+                    <td class="{% if item.change > 0 %}text-success{% else %}text-danger{% endif %}">{{ item.change|floatformat:2 }}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const assetCtx = document.getElementById('assetAllocationChart').getContext('2d');
+        const assetAllocation = JSON.parse('{{ asset_allocation|safe|escapejs }}');
+        const assetLabels = Object.keys(assetAllocation);
+        const assetData = Object.values(assetAllocation);
+        
+        const assetAllocationChart = new Chart(assetCtx, {
+            type: 'pie',
+            data: {
+                labels: assetLabels,
+                datasets: [{
+                    label: 'Asset Allocation',
+                    data: assetData,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                        'rgba(75, 192, 192, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Asset Allocation'
+                    }
+                }
+            }
+        });
+
+        const stockCtx = document.getElementById('stockAllocationChart').getContext('2d');
+        const stockAllocation = JSON.parse('{{ stock_allocation_json|safe|escapejs }}');
+        const stockLabels = Object.keys(stockAllocation);
+        const stockData = Object.values(stockAllocation);
+
+        const stockAllocationChart = new Chart(stockCtx, {
+            type: 'pie',
+            data: {
+                labels: stockLabels,
+                datasets: [{
+                    label: 'Распределение акций',
+                    data: stockData,
+                    backgroundColor: stockLabels.map((_, i) => `rgba(${255 - (i * 30) % 256}, ${99 + (i * 30) % 156}, ${132 + (i * 30) % 123}, 0.2)`),
+                    borderColor: stockLabels.map((_, i) => `rgba(${255 - (i * 30) % 256}, ${99 + (i * 30) % 156}, ${132 + (i * 30) % 123}, 1)`),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Распределение акций'
+                    }
+                }
+            }
+        });
+
+        const cryptoCtx = document.getElementById('cryptoAllocationChart').getContext('2d');
+        const cryptoAllocation = JSON.parse('{{ crypto_allocation_json|safe|escapejs }}');
+        const cryptoLabels = Object.keys(cryptoAllocation);
+        const cryptoData = Object.values(cryptoAllocation);
+
+        const cryptoAllocationChart = new Chart(cryptoCtx, {
+            type: 'pie',
+            data: {
+                labels: cryptoLabels,
+                datasets: [{
+                    label: 'Распределение криптовалют',
+                    data: cryptoData,
+                    backgroundColor: cryptoLabels.map((_, i) => `rgba(${255 - (i * 30) % 256}, ${99 + (i * 30) % 156}, ${132 + (i * 30) % 123}, 0.2)`),
+                    borderColor: cryptoLabels.map((_, i) => `rgba(${255 - (i * 30) % 256}, ${99 + (i * 30) % 156}, ${132 + (i * 30) % 123}, 1)`),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Распределение криптовалют'
+                    }
+                }
+            }
+        });
+
+        const bondCtx = document.getElementById('bondAllocationChart').getContext('2d');
+        const bondAllocation = JSON.parse('{{ bond_allocation_json|safe|escapejs }}');
+        const bondLabels = Object.keys(bondAllocation);
+        const bondData = Object.values(bondAllocation);
+
+        const bondAllocationChart = new Chart(bondCtx, {
+            type: 'pie',
+            data: {
+                labels: bondLabels,
+                datasets: [{
+                    label: 'Распределение облигаций',
+                    data: bondData,
+                    backgroundColor: bondLabels.map((_, i) => `rgba(${255 - (i * 30) % 256}, ${99 + (i * 30) % 156}, ${132 + (i * 30) % 123}, 0.2)`),
+                    borderColor: bondLabels.map((_, i) => `rgba(${255 - (i * 30) % 256}, ${99 + (i * 30) % 156}, ${132 + (i * 30) % 123}, 1)`),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Распределение облигаций'
+                    }
+                }
+            }
+        });
+
+        const fundCtx = document.getElementById('fundAllocationChart').getContext('2d');
+        const fundAllocation = JSON.parse('{{ fund_allocation_json|safe|escapejs }}');
+        const fundLabels = Object.keys(fundAllocation);
+        const fundData = Object.values(fundAllocation);
+
+        const fundAllocationChart = new Chart(fundCtx, {
+            type: 'pie',
+            data: {
+                labels: fundLabels,
+                datasets: [{
+                    label: 'Распределение фондов',
+                    data: fundData,
+                    backgroundColor: fundLabels.map((_, i) => `rgba(${255 - (i * 30) % 256}, ${99 + (i * 30) % 156}, ${132 + (i * 30) % 123}, 0.2)`),
+                    borderColor: fundLabels.map((_, i) => `rgba(${255 - (i * 30) % 256}, ${99 + (i * 30) % 156}, ${132 + (i * 30) % 123}, 1)`),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Распределение фондов'
+                    }
+                }
+            }
+        });
+
+        const performanceCtx = document.getElementById('individualAssetPerformanceChart').getContext('2d');
+        const performanceLabels = JSON.parse('{{ performance_labels|safe|escapejs }}');
+        const performanceData = JSON.parse('{{ performance_data|safe|escapejs }}');
+        const backgroundColors = performanceData.map(value => value > 0 ? 'rgba(75, 192, 192, 0.2)' : 'rgba(255, 99, 132, 0.2)');
+        const borderColors = performanceData.map(value => value > 0 ? 'rgba(75, 192, 192, 1)' : 'rgba(255, 99, 132, 1)');
+
+        const individualAssetPerformanceChart = new Chart(performanceCtx, {
+            type: 'bar',
+            data: {
+                labels: performanceLabels,
+                datasets: [{
+                    label: 'Прибыли / убыток (%)',
+                    data: performanceData,
+                    backgroundColor: backgroundColors,
+                    borderColor: borderColors,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    title: {
+                        display: true,
+                        text: 'Индивидуальные показатели активов'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        min: Math.min(...performanceData) - 5,
+                        max: Math.max(...performanceData) + 5
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
