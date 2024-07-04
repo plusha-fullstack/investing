@@ -200,9 +200,7 @@ def main():
     securities_columns, securities_data, market_columns, market_data = parse_moex_data(moex_funds_data)
     save_funds_to_db(securities_columns, securities_data)
     update_fund_data_in_db(market_columns, market_data)
-
 schedule.every(3).minutes.do(main)
-
 while True:
     schedule.run_pending()
     time.sleep(1)
